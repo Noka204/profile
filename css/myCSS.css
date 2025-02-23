@@ -31,14 +31,17 @@ body {
 }
 
 .container {
-    margin-top: 100px;
-    margin-left: 450px;
-    margin-right: 450px;
-    padding-top: 20px;
-    height: 510px;
+    display: flex;
+    position: relative;
+    width: 600px;
+    height: 530px;
     box-shadow: 0 0 10px 10px rgba(0, 0, 0, 0.5);
     background: rgba(101, 94, 94, 0.5);
     border-radius: 50px;
+    align-items: center;
+    margin: 75px auto;
+    flex-direction: column;
+    padding-top: 20px;
 }
 .profile {
     padding-top: 10px;
@@ -180,3 +183,18 @@ button:hover {
     font-size: 10px;
     color: rgb(227, 227, 227);
 }
+.view {
+    position: absolute;
+    bottom: 30px;
+    left: 30px;
+  }
+  .view img {
+    width: 24px;
+    height: 24px;
+  }
+  view span {
+    margin-top: 0px;
+    font-size: 14px;
+    font-family: 'Times New Roman', Times, serif;
+    color: rgb(227, 227, 227);
+  }
