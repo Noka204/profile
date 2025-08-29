@@ -62,24 +62,21 @@
     .avatar{
       width:140px;height:140px;margin:0 auto 14px;
       position:relative;
-      border-radius:999px;            /* avatar tròn */
-      overflow:visible;               /* để viền PNG có thể tràn nhẹ ra ngoài */
-      box-shadow:0 20px 60px #000;    /* bóng rơi nhẹ */
+      border-radius:999px;
+      overflow:visible;
+      box-shadow:0 20px 60px #000;
     }
     .avatar img{
       width:100%;height:100%;display:block;
       object-fit:cover;border-radius:999px;
       position:relative;z-index:0;
     }
-    /* Viền PNG: img/vien_avt.png */
     .avatar::before{
-      content:"";position:absolute;inset:-6px;  /* -6px để viền hơi phủ ra ngoài */
+      content:"";position:absolute;inset:-6px;
       background:url('img/vien_avt.png') center/contain no-repeat;
       pointer-events:none; z-index:2;
-      /* phát sáng rất nhẹ để nổi khối (tuỳ chọn) */
       filter:drop-shadow(0 0 8px rgba(255,170,200,.25));
     }
-    /* Ánh sáng mềm phía trong (giữ nhẹ) */
     .avatar::after{
       content:"";position:absolute;inset:-2px;border-radius:999px;z-index:1;
       box-shadow:0 0 20px 6px #fff2 inset;
@@ -117,9 +114,13 @@
 
     /* Cards */
     .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px auto 0;align-items:start;max-width:600px}
-    .card{position:relative;border-radius:14px;overflow:hidden;background:transparent;border:1px solid #ffffff14}
+    .card{
+      position:relative;border-radius:14px;overflow:hidden;background:transparent;border:1px solid #ffffff14;
+      aspect-ratio:16/9;           /* giữ khung ổn định */
+    }
     .card[data-url]{cursor:pointer}
-    .card img{display:block;width:100%;height:auto}
+    /* Ảnh/GIF fill khung */
+    .card img{display:block;width:100%;height:100%;object-fit:cover;image-rendering:auto}
 
     /* Badge */
     .badge{
@@ -222,12 +223,14 @@
     <!-- Cards -->
     <section class="cards">
       <article class="card" data-url="https://example.com/bai-1">
-        <img src="img/a1.png" alt="card 1">
+        <!-- Tự thử: a1.gif → a1.webp → a1.png → a1.jpg → a1.jpeg -->
+        <img id="imgA1" loading="lazy" decoding="async" referrerpolicy="no-referrer" alt="card 1">
         <div class="badge">serendipity</div>
       </article>
 
       <article class="card" data-url="https://discord.gg/yourInvite">
-        <img src="img/a2.png" alt="card 2">
+        <!-- Tự thử: a2.gif → a2.webp → a2.png → a2.jpg → a2.jpeg -->
+        <img id="imgA2" loading="lazy" decoding="async" referrerpolicy="no-referrer" alt="card 2">
         <div class="badge">salad days</div>
       </article>
     </section>
@@ -314,8 +317,7 @@ function normalizeSchema(j){
   if('count'in j||'ips'in j){j={views:{count:j.count||0,ips:j.ips||[]},likes:{count:0,ips:[]}}}
   if(!j.views)j.views={count:0,ips:[]};
   if(!j.likes)j.likes={count:0,ips:[]};
-  j.views.ips=Array.isArray(j.views.ips)?j.views.ips:[];
-  j.likes.ips=Array.isArray(j.likes.ips)?j.likes.ips:[]; 
+  j.views.ips=Array.isArray(j.views.ips)?j.views.ips:[]; j.likes.ips=Array.isArray(j.likes.ips)?j.likes.ips:[];
   j.views.count=j.views.ips.length;
   j.likes.count=j.likes.ips.length;
   return j;
@@ -445,7 +447,7 @@ muteBtn.addEventListener('click', (e) => {
   if (!supportsHover && !volumeGroup.classList.contains('open')) {
     volumeGroup.classList.add('open');
     setTimeout(() => volEl.focus(), 0);
-    e.preventDefault(); // lần tap đầu chỉ mở slider
+    e.preventDefault();
     return;
   }
 
@@ -490,11 +492,33 @@ function setupNick(){
   });
 }
 
+/* ===== Smart image loader for cards (a1, a2) ===== */
+function setSmartSrc(imgEl, baseName){
+  const roots = ['./img/','img/'];
+  const exts  = ['.gif','.webp','.png','.jpg','.jpeg'];
+  let k = 0;
+  function tryNext(){
+    if(k >= roots.length * exts.length){
+      imgEl.alt = baseName + ' not found';
+      imgEl.style.opacity = .6;
+      return;
+    }
+    const src = roots[Math.floor(k/exts.length)] + baseName + exts[k % exts.length];
+    imgEl.onerror = () => { k++; tryNext(); };
+    imgEl.src = src;
+  }
+  tryNext();
+}
+
 /* ===== Boot ===== */
 document.addEventListener('DOMContentLoaded',()=>{
   setupNick();
   initStats();
   initCardLinks();
+
+  // nạp ảnh/gif cho 2 card theo tên base a1/a2
+  setSmartSrc(document.getElementById('imgA1'),'a1');
+  setSmartSrc(document.getElementById('imgA2'),'a2');
 });
 </script>
 </body>
