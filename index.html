@@ -277,17 +277,25 @@
     </section>
   </main>
 
+<<<<<<< HEAD
+<script>const STATS = {
+  baseViews: 1234,
+  baseLikes: 56,
+  bumpViewOncePerBrowser: true,
+  localLikeToggle: true,
+=======
 <script>
 /* ===== GitHub config ===== */
 const GITHUB = {
-  token:"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", // ⚠️ Đừng commit token lên public repo
+  token:"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", // ⚠️ Đừng commit token lên public repo
   owner:"Noka204",
   repo:"quanlykey",
   filePath:"view.json",
   apiVersion:"2022-11-28"
+>>>>>>> 6c117ee91e9aed6fc28dabbd45145398129924fc
 };
 
-/* ===== Notice ===== */
+/* ====== Notice ====== */
 const note = document.getElementById('note');
 function showNote(msg,type='warn'){
   note.textContent=msg;
@@ -295,107 +303,80 @@ function showNote(msg,type='warn'){
   note.style.background=type==='ok'?'#0b2215cc':'#2b0d12cc';
   note.classList.add('show');
   clearTimeout(showNote._t);
-  showNote._t=setTimeout(()=>note.classList.remove('show'),6000);
+  showNote._t=setTimeout(()=>note.classList.remove('show'),4000);
 }
 
-/* ===== GitHub helpers ===== */
-function baseHeaders(){return{'Accept':'application/vnd.github+json','X-GitHub-Api-Version':GITHUB.apiVersion,'User-Agent':'noka-profile'};}
-function hasPAT(){return GITHUB.token && !GITHUB.token.includes('YOUR_PAT_HERE');}
-function authHeader(s){return hasPAT()?{'Authorization':`${s} ${GITHUB.token}`}:{ };}
+/* ====== Stats (Local only) ====== */
+const viewEl = document.getElementById('viewCount');
+const likesEl = document.getElementById('likesA');
+const likeBtn = document.getElementById('likeBtn');
 
-async function ghFetch(url,opt={},tryNoAuth=false){
-  const h0={...baseHeaders(),...(opt.headers||{})};
-  if(!hasPAT() && opt.method==='PUT') return new Response(null,{status:401,statusText:'No PAT configured'});
-  let r=await fetch(url,{...opt,headers:{...h0,...authHeader('token')}});
-  if(r.status===401) r=await fetch(url,{...opt,headers:{...h0,...authHeader('Bearer')}});
-  if(r.status===401 && tryNoAuth && opt.method!=='PUT') r=await fetch(url,{...opt,headers:h0});
-  return r;
-}
-const b64e=s=>btoa(unescape(encodeURIComponent(s)));
-const b64d=b=>decodeURIComponent(escape(atob((b||'').replace(/\n/g,''))));
-function normalizeSchema(j){
-  if('count'in j||'ips'in j){j={views:{count:j.count||0,ips:j.ips||[]},likes:{count:0,ips:[]}}}
-  if(!j.views)j.views={count:0,ips:[]};
-  if(!j.likes)j.likes={count:0,ips:[]};
-  j.views.ips=Array.isArray(j.views.ips)?j.views.ips:[]; j.likes.ips=Array.isArray(j.likes.ips)?j.likes.ips:[];
-  j.views.count=j.views.ips.length;
-  j.likes.count=j.likes.ips.length;
-  return j;
-}
-async function readFile(){
-  const url=`https://api.github.com/repos/${GITHUB.owner}/${GITHUB.repo}/contents/${GITHUB.filePath}`;
-  let r=await ghFetch(url,{method:'GET'},true);
-  if(r.status===404) return {json:{views:{count:0,ips:[]},likes:{count:0,ips:[]}},sha:null};
-  if(!r.ok){showNote(`GitHub READ lỗi: ${r.status} ${r.statusText}`);throw new Error(`read ${r.status}`);}
-  const d=await r.json();
-  let j;
-  try{ j=JSON.parse(b64d(d.content)) }catch{ j={views:{count:0,ips:[]},likes:{count:0,ips:[]}} }
-  return {json:normalizeSchema(j),sha:d.sha};
-}
-async function writeFile(j,oldSha,retry=true){
-  const url=`https://api.github.com/repos/${GITHUB.owner}/${GITHUB.repo}/contents/${GITHUB.filePath}`;
-  const body={message:`update stats ${new Date().toISOString()}`,content:b64e(JSON.stringify(j,null,2)),...(oldSha?{sha:oldSha}:{})};
-  let r=await ghFetch(url,{method:'PUT',headers:{...baseHeaders(),'Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(r.status===409&&retry){const {sha:newSha}=await readFile();return writeFile(j,newSha,false)}
-  if(!r.ok){showNote(`GitHub WRITE lỗi: ${r.status} ${r.statusText}`);throw new Error(`write ${r.status}`)}
-  return r.json();
-}
-
-/* ===== Visitor ID ===== */
-async function sha256Hex(s){const e=new TextEncoder().encode(s);const b=await crypto.subtle.digest('SHA-256',e);return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-async function getVisitorHash(){
-  try{const r=await fetch('https://api.ipify.org?format=json',{cache:'no-store'});if(r.ok){const {ip}=await r.json();return sha256Hex('ip:'+ip)}}catch{}
-  try{const r=await fetch('https://api64.ipify.org?format=json',{cache:'no-store'});if(r.ok){const {ip}=await r.json();return sha256Hex('ip:'+ip)}}catch{}
-  let vid=localStorage.getItem('noka_vid');
-  if(!vid){vid=[Date.now(),Math.random(),navigator.userAgent,navigator.language,Intl.DateTimeFormat().resolvedOptions().timeZone].join('|');localStorage.setItem('noka_vid',vid)}
-  return sha256Hex('vid:'+vid)
-}
-
-/* ===== Stats ===== */
-const viewEl=document.getElementById('viewCount');
-const likesEl=document.getElementById('likesA');
-const likeBtn=document.getElementById('likeBtn');
-let VISITOR_HASH=null;
-
-async function initStats(){
-  try{
-    VISITOR_HASH=await getVisitorHash();
-    let {json,sha}=await readFile();
-
-    if(!json.views.ips.includes(VISITOR_HASH)){
-      json.views.ips.push(VISITOR_HASH);
-      json.views.count=json.views.ips.length;
-      const res=await writeFile(json,sha); sha=res.content?.sha||sha;
+function initStats(){
+  // Lượt xem: cộng 1 nếu lần đầu vào site trên trình duyệt này (nếu bật)
+  let views = STATS.baseViews;
+  const seenKey = 'ckgm_seen';
+  if (STATS.bumpViewOncePerBrowser) {
+    const seen = localStorage.getItem(seenKey);
+    if (!seen) {
+      views += 1;
+      localStorage.setItem(seenKey, '1');
     }
-
-    viewEl.textContent=json.views.ips.length;
-    likesEl.textContent=json.likes.ips.length;
-    likeBtn.classList.toggle('liked',json.likes.ips.includes(VISITOR_HASH));
-
-    likeBtn.onclick=async()=>{
-      try{
-        let {json:fresh,sha:fsha}=await readFile();
-        const has=fresh.likes.ips.includes(VISITOR_HASH);
-        if(has) fresh.likes.ips=fresh.likes.ips.filter(x=>x!==VISITOR_HASH); else fresh.likes.ips.push(VISITOR_HASH);
-        fresh.likes.count=fresh.likes.ips.length;
-        await writeFile(fresh,fsha);
-        likesEl.textContent=fresh.likes.count;
-        likeBtn.classList.toggle('liked',!has);
-      }catch{ showNote('Không ghi được like. Kiểm tra PAT/permission.'); }
-    };
-
-    if(!hasPAT()) showNote('PAT chưa cấu hình — chỉ đọc được, KHÔNG ghi lên GitHub.');
-  }catch(e){
-    console.warn(e); viewEl.textContent='—'; showNote('Không đọc được view.json — kiểm tra PAT/permission/Live Server');
   }
+  viewEl.textContent = views.toLocaleString('vi-VN');
+
+  // Likes cục bộ: lưu key theo site
+  let likes = STATS.baseLikes;
+  const likeKey = 'ckgm_liked';
+  const liked = localStorage.getItem(likeKey) === '1';
+  if (liked) {
+    likeBtn.classList.add('liked');
+    // tuỳ chọn: hiển thị baseLikes+1 nếu đã like
+    likes += 1;
+  }
+  likesEl.textContent = likes.toLocaleString('vi-VN');
+
+  likeBtn.onclick = () => {
+    if (!STATS.localLikeToggle) {
+      showNote('Like ở chế độ cố định.', 'warn');
+      return;
+    }
+    const isLiked = likeBtn.classList.toggle('liked');
+    let current = parseInt(likesEl.textContent.replace(/\./g,'')) || STATS.baseLikes;
+    current += isLiked ? 1 : -1;
+    likesEl.textContent = current.toLocaleString('vi-VN');
+    localStorage.setItem(likeKey, isLiked ? '1' : '0');
+  };
 }
-/* ===== Card click → open link ===== */
+
+/* ===== Card click → download/open link ===== */
 function initCardLinks(){
-  document.querySelectorAll('.card[data-url]').forEach(card=>{
-    const url=card.dataset.url; if(!url) return;
-    card.addEventListener('click',()=>window.open(url,'_blank','noopener'));
-    card.tabIndex=0; card.setAttribute('role','link');
-    card.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();window.open(url,'_blank','noopener');}});
+  document.querySelectorAll('.card[data-url]').forEach((card, index) => {
+    const url = card.dataset.url; 
+    if(!url) return;
+
+    if(index === 0) {
+      const img = card.querySelector('img');
+      const doDownload = () => {
+        const a = document.createElement('a');
+        a.href = img.src;
+        a.download = 'a1' + img.src.substring(img.src.lastIndexOf('.'));
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
+      card.addEventListener('click', doDownload);
+      card.addEventListener('keydown', e => {
+        if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doDownload(); }
+      });
+    } else {
+      const openIt = () => window.open(url, '_blank', 'noopener');
+      card.addEventListener('click', openIt);
+      card.addEventListener('keydown', e => {
+        if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openIt(); }
+      });
+    }
+    card.tabIndex = 0;
+    card.setAttribute('role', 'link');
   });
 }
 
@@ -413,7 +394,7 @@ const muteBtn=document.getElementById('mute');
 const volEl=document.getElementById('vol');
 const muteIcon=muteBtn.querySelector('i');
 
-const TRACK={ name:'Hà Nội', url:'audio/nhac.mp3', fallback:'https://file-examples.com/storage/fe6f0b0fe6c0e0b7bdbd6a1/2017/11/file_example_MP3_700KB.mp3' };
+const TRACK={ name:'Bát Quái', url:'audio/nhac.mp3', fallback:'https://file-examples.com/storage/fe6f0b0fe6c0e0b7bdbd6a1/2017/11/file_example_MP3_700KB.mp3' };
 
 function formatTime(s){if(!Number.isFinite(s))return'00:00';const m=Math.floor(s/60),ss=Math.floor(s%60);return`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`}
 function setPlayIcon(p){playBtn.innerHTML=p?'<i class="fa-solid fa-pause"></i>':'<i class="fa-solid fa-play"></i>'}
@@ -437,35 +418,25 @@ audio.addEventListener('loadedmetadata',()=>{timeEl.textContent=`${formatTime(au
 audio.addEventListener('timeupdate',()=>{ if(audio.duration) seek.value=(audio.currentTime/audio.duration)*100; timeEl.textContent=`${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`; });
 seek.addEventListener('input',()=>{ if(audio.duration) audio.currentTime=(seek.value/100)*audio.duration; });
 
-/* ===== Volume hover-expand + mobile tap-to-open ===== */
 const volumeGroup = document.querySelector('.volume-group');
-
 muteBtn.addEventListener('click', (e) => {
   const supportsHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
-
   if (!supportsHover && !volumeGroup.classList.contains('open')) {
     volumeGroup.classList.add('open');
     setTimeout(() => volEl.focus(), 0);
     e.preventDefault();
     return;
   }
-
   audio.muted = !audio.muted;
   updateSpeakerIcon();
 });
-
 volEl.addEventListener('input',()=>{
   audio.volume=parseFloat(volEl.value);
   if(audio.volume>0&&audio.muted) audio.muted=false;
   updateSpeakerIcon();
 });
 audio.addEventListener('volumechange',updateSpeakerIcon);
-
-// Thu gọn khi click ra ngoài (mobile)
-document.addEventListener('click',(ev)=>{
-  if(!volumeGroup.contains(ev.target)) volumeGroup.classList.remove('open');
-});
-
+document.addEventListener('click',(ev)=>{ if(!volumeGroup.contains(ev.target)) volumeGroup.classList.remove('open'); });
 document.getElementById('rew10').addEventListener('click',()=>{ audio.currentTime=Math.max(0,audio.currentTime-10); });
 document.getElementById('fwd10').addEventListener('click',()=>{ audio.currentTime=Math.min(audio.duration||0,audio.currentTime+10); });
 loadTrack();
@@ -514,8 +485,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   setupNick();
   initStats();
   initCardLinks();
-
-  // nạp ảnh/gif cho 2 card theo tên base a1/a2
   setSmartSrc(document.getElementById('imgA1'),'a1');
   setSmartSrc(document.getElementById('imgA2'),'a2');
 });
