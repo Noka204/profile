@@ -383,7 +383,7 @@ const muteBtn=document.getElementById('mute');
 const volEl=document.getElementById('vol');
 const muteIcon=muteBtn.querySelector('i');
 
-const TRACK={ name:'Bát Quái', url:'audio/nhac.mp3', fallback:'https://file-examples.com/storage/fe6f0b0fe6c0e0b7bdbd6a1/2017/11/file_example_MP3_700KB.mp3' };
+const TRACK={ name:'Hà Nội', url:'audio/nhac.mp3', fallback:'https://file-examples.com/storage/fe6f0b0fe6c0e0b7bdbd6a1/2017/11/file_example_MP3_700KB.mp3' };
 
 function formatTime(s){if(!Number.isFinite(s))return'00:00';const m=Math.floor(s/60),ss=Math.floor(s%60);return`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`}
 function setPlayIcon(p){playBtn.innerHTML=p?'<i class="fa-solid fa-pause"></i>':'<i class="fa-solid fa-play"></i>'}
