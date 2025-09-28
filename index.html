@@ -461,44 +461,65 @@
         opacity: 1;
         transform: translateY(0);
       }
-      /* Border đẹp cho ảnh */
-      .card.ring {
+      /* Khung ảnh trắng-đen kiểu ảnh in Đức (nhiều đen, net) */
+      .card.bwframe {
         position: relative;
-        overflow: hidden;
+        border: none;
+        overflow: visible;
+      } /* cho phép khung dày ra ngoài */
+      .card.bwframe img {
+        position: relative;
+        z-index: 2;
+      } /* ảnh nằm trên lớp viền */
+
+      /* Lớp viền đen dày (outer frame) */
+      .card.bwframe::before {
+        content: "";
+        position: absolute;
+        /* khung dày ra ngoài ảnh ~12px */
+        inset: -12px;
+        border-radius: 18px;
+        background: #000; /* nhiều đen */
+        box-shadow: 0 0 0 1px #000,
+          /* nét ngoài sắc, “net Đức” */ 0 14px 40px rgba(0, 0, 0, 0.7),
+          /* đổ bóng sâu */ inset 0 0 0 1px rgba(255, 255, 255, 0.04); /* mỏng rất nhẹ để giả chất liệu */
+        z-index: 0;
+        pointer-events: none;
       }
-      /* viền gradient mảnh (1.5px) */
-      .card.ring::before {
+
+      /* Viền trắng mảnh bên trong (keyline) để ảnh nổi hơn */
+      .card.bwframe::after {
+        content: "";
+        position: absolute;
+        inset: 6px; /* khoảng cách vào trong khung đen */
+        border-radius: 12px;
+        border: 2px solid #fff;
+        opacity: 0.95;
+        mix-blend-mode: screen; /* tránh “bệt” trên nền tối */
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      /* Vignette nhẹ quanh mép ảnh (cho cảm giác ảnh giấy) */
+      .card.bwframe .vignette {
         content: "";
         position: absolute;
         inset: 0;
         border-radius: 14px;
-        padding: 1.5px; /* độ dày viền */
-        background: linear-gradient(135deg, #ff8ab6, #9db5ff 55%, #7afcff);
-        -webkit-mask: linear-gradient(#000 0 0) content-box,
-          linear-gradient(#000 0 0);
-        -webkit-mask-composite: xor;
-        mask-composite: exclude; /* chỉ giữ phần “viền” */
+        box-shadow: inset 0 0 120px 18px rgba(0, 0, 0, 0.55);
+        z-index: 3;
         pointer-events: none;
-        opacity: 0.9;
       }
-      /* glow rất nhẹ khi hover */
-      .card.ring::after {
-        content: "";
+
+      /* (TUỲ CHỌN) muốn ảnh chuyển về trắng-đen mạnh hơn */
+      .card.bwframe.bw img {
+        filter: grayscale(100%) contrast(1.12) brightness(0.98);
+      }
+
+      /* Giữ badge nổi trên cùng */
+      .card .badge {
         position: absolute;
-        inset: -8px;
-        border-radius: 18px;
-        background: radial-gradient(
-          closest-side,
-          rgba(157, 181, 255, 0.16),
-          transparent 70%
-        );
-        filter: blur(12px);
-        opacity: 0;
-        transition: opacity 0.25s ease;
-        pointer-events: none;
-      }
-      .card.ring:hover::after {
-        opacity: 1;
+        z-index: 4;
       }
 
       /* ===== Player ===== */
@@ -989,7 +1010,7 @@
       const muteIcon = muteBtn.querySelector("i");
 
       const TRACK = {
-        name: "Hà Nội",
+        name: "Hà Nội - Obito, Shiki & VSTRA",
         url: "audio/nhac.mp3",
         fallback:
           "https://file-examples.com/storage/fe6f0b0fe6c0e0b7bdbd6a1/2017/11/file_example_MP3_700KB.mp3",
